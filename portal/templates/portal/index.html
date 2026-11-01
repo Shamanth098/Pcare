@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PCare AI — Healthcare Triage</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:  '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+
+    /* Sidebar slide transition */
+    #sidebar {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Hero gradient background */
+    .hero-gradient {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #f0fdf4 100%);
+    }
+    .dark .hero-gradient {
+      background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 40%, #0f172a 100%);
+    }
+
+    /* Chip hover */
+    .symptom-chip {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .symptom-chip:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    .symptom-chip:active {
+      transform: translateY(0);
+    }
+
+    /* Card animation */
+    .clinic-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .clinic-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+
+    /* Copy button flash */
+    .copy-flash {
+      animation: flash 0.4s ease;
+    }
+    @keyframes flash {
+      0%   { background-color: #4f46e5; color: white; }
+      50%  { background-color: #22c55e; color: white; }
+      100% { background-color: #4f46e5; color: white; }
+    }
+
+    /* Pulse skeleton */
+    @keyframes pulse-bg {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+    .skeleton { animation: pulse-bg 1.5s ease-in-out infinite; }
+
+    /* Glassmorphism navbar */
+    .glass-nav {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255,255,255,0.85);
+      border-bottom: 1px solid rgba(99,102,241,0.1);
+    }
+    .dark .glass-nav {
+      background: rgba(15,23,42,0.85);
+      border-bottom: 1px solid rgba(99,102,241,0.2);
+    }
+
+    /* Recommended glow */
+    .recommended-glow {
+      box-shadow: 0 0 0 2px #fbbf24, 0 0 0 4px rgba(251,191,36,0.3);
+    }
+  </style>
+</head>
+
+<body class="font-sans bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+  <!-- ============================================================
+       SIDEBAR OVERLAY
+  ============================================================ -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-black/40 z-40 hidden transition-opacity duration-300"></div>
+
+  <!-- ============================================================
+       SLIDE-OUT DRAWER
+  ============================================================ -->
+  <aside id="sidebar" class="fixed top-0 right-0 h-full w-72 bg-white dark:bg-gray-900 z-50 shadow-2xl translate-x-full border-l border-gray-200 dark:border-gray-700 flex flex-col">
+    <!-- Close button -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <span class="font-bold text-primary-600 dark:text-primary-400 text-lg">Menu</span>
+      <button id="sidebar-close" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors" aria-label="Close sidebar">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Dark mode toggle -->
+    <div class="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg id="sun-icon" class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2a1 1 0 011 1v1a1 1 0 01-2 0V3a1 1 0 011-1zm0 16a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zm10-6a1 1 0 010 2h-1a1 1 0 010-2h1zM3 12a1 1 0 010 2H2a1 1 0 010-2h1zm15.364-7.364a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM6.343 17.657a1 1 0 010 1.414l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 0zM17.657 17.657a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM5.636 5.636a1 1 0 011.414 0l.707.707A1 1 0 016.343 7.757l-.707-.707a1 1 0 010-1.414zM12 6a6 6 0 100 12A6 6 0 0012 6z"/>
+          </svg>
+          <svg id="moon-icon" class="w-5 h-5 text-primary-400 hidden" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
+          </svg>
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300" id="theme-label">Light Mode</span>
+        </div>
+        <!-- Toggle switch -->
+        <button id="theme-toggle" role="switch" aria-checked="false"
+          class="relative inline-flex h-6 w-11 items-center rounded-full border-2 border-gray-300 dark:border-primary-500 bg-gray-200 dark:bg-primary-600 transition-colors duration-200 focus:outline-none">
+          <span id="theme-toggle-dot"
+            class="inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-200 translate-x-0.5 dark:translate-x-5"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Menu items -->
+    <nav class="flex-1 px-4 py-4 space-y-1">
+      {% if user.is_authenticated %}
+        <div class="px-4 py-2 mb-2 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">
+          Signed in as <span class="font-bold text-primary-600 dark:text-primary-400">{{ user.username }}</span>
+        </div>
+        {% if user.is_staff %}
+        <a href="/admin/" target="_blank" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors">
+          <span class="text-xl">🛠️</span>
+          <span class="font-medium">Django Admin</span>
+        </a>
+        {% endif %}
+        <a href="{% url 'logout' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400 transition-colors">
+          <span class="text-xl">🚪</span>
+          <span class="font-medium">Logout</span>
+        </a>
+      {% else %}
+        <a href="{% url 'login' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors">
+          <span class="text-xl">🔐</span>
+          <span class="font-medium">Staff Login</span>
+        </a>
+        <a href="{% url 'register' %}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-primary-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors">
+          <span class="text-xl">📝</span>
+          <span class="font-medium">Register</span>
+        </a>
+      {% endif %}
+    </nav>
+
+    <div class="px-5 py-4 border-t border-gray-100 dark:border-gray-800">
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">PCare AI &copy; 2026</p>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       NAVBAR
+  ============================================================ -->
+  <nav class="glass-nav fixed top-0 left-0 right-0 z-30 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href="#hero" class="flex items-center gap-2 group">
+        <span class="text-2xl animate-pulse">❤️</span>
+        <span class="text-xl font-extrabold bg-gradient-to-r from-primary-600 to-blue-500 bg-clip-text text-transparent">
+          PCare AI
+        </span>
+      </a>
+
+      <!-- Center nav links (desktop) -->
+      <div class="hidden md:flex items-center gap-1">
+        <a href="#hero" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-800 transition-all">
+          Home
+        </a>
+        <a href="#clinics" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-800 transition-all">
+          Find Clinics
+        </a>
+        <a href="#about" class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-800 transition-all">
+          About
+        </a>
+      </div>
+
+      <!-- Right: Auth status + Hamburger -->
+      <div class="flex items-center gap-3">
+        {% if user.is_authenticated %}
+          <div class="hidden sm:flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Hello, {{ user.username }}
+            </span>
+            {% if user.is_staff %}
+              <a href="/admin/" target="_blank"
+                class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors">
+                Admin
+              </a>
+            {% endif %}
+            <a href="{% url 'logout' %}"
+              class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 transition-colors">
+              Logout
+            </a>
+          </div>
+        {% else %}
+          <div class="hidden sm:flex items-center gap-2">
+            <a href="{% url 'login' %}"
+              class="px-3 py-1.5 text-xs font-semibold rounded-xl text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-800 transition-colors">
+              Staff Login
+            </a>
+            <a href="{% url 'register' %}"
+              class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-primary-600 hover:bg-primary-700 text-white shadow-sm transition-all hover:scale-105">
+              Register
+            </a>
+          </div>
+        {% endif %}
+
+        <!-- Hamburger -->
+        <button id="hamburger-btn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors" aria-label="Open menu">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       HERO SECTION
+  ============================================================ -->
+  <section id="hero" class="hero-gradient min-h-screen flex flex-col items-center justify-center pt-16 pb-12 px-4">
+    <div class="max-w-3xl w-full mx-auto text-center">
+
+      <!-- Subtitle -->
+      <div class="inline-flex items-center gap-2 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/>
+        </svg>
+        AI-Powered Healthcare Suggestion
+      </div>
+
+      <!-- Main heading -->
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight">
+        <span class="bg-gradient-to-r from-primary-700 via-primary-500 to-blue-400 bg-clip-text text-transparent">
+          What's your concern today?
+        </span>
+      </h1>
+      <p class="text-lg sm:text-xl text-gray-500 dark:text-gray-400 mb-10">
+        Describe your symptoms and get instant triage guidance
+      </p>
+
+      <!-- Search Card -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-5 sm:p-7 border border-gray-100 dark:border-gray-700 text-left">
+        <label for="symptom-input" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Describe your symptoms
+        </label>
+        <textarea
+          id="symptom-input"
+          rows="3"
+          maxlength="800"
+          class="w-full resize-none rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500 transition-all"
+          placeholder="e.g. I have a burning sensation on my left arm after touching a hot pan..."
+        ></textarea>
+
+        <div class="flex items-center justify-between mt-3">
+          <span id="char-counter" class="text-xs text-gray-400 dark:text-gray-500">0 / 800</span>
+          <button
+            id="search-btn"
+            class="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold px-6 py-2.5 rounded-xl shadow-md hover:shadow-lg hover:scale-105 active:scale-100 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed disabled:scale-100"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            Analyze Symptoms
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Chips -->
+      <div class="flex flex-wrap items-center justify-center gap-3 mt-6">
+        <span class="text-sm text-gray-400 dark:text-gray-500 font-medium mr-1">Quick select:</span>
+        <button class="symptom-chip bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-orange-200 dark:hover:bg-orange-900/70 transition-colors"
+          data-symptom="I have a burning sensation on my left forearm after accidentally touching a hot pan. The skin is red and blistered.">
+          🔥 Burn
+        </button>
+        <button class="symptom-chip bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-200 dark:hover:bg-blue-900/70 transition-colors"
+          data-symptom="I have had a fever of 102°F for the past two days with body aches, mild headache and fatigue. No cough or cold.">
+          🌡️ Fever
+        </button>
+        <button class="symptom-chip bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700 px-4 py-2 rounded-full text-sm font-medium hover:bg-red-200 dark:hover:bg-red-900/70 transition-colors"
+          data-symptom="chest pain">
+          💔 Chest Pain
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         RESULT PANEL
+    ============================================================ -->
+    <div id="result-panel" class="hidden max-w-3xl w-full mx-auto mt-10">
+
+      <!-- Loading skeleton -->
+      <div id="loading-skeleton" class="hidden bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
+        <div class="skeleton h-8 w-40 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+        <div class="skeleton h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div class="skeleton h-4 w-5/6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div class="skeleton h-24 w-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+      </div>
+
+      <!-- Result content -->
+      <div id="result-content" class="hidden bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-100 dark:border-gray-700">
+
+        <!-- Urgency badge -->
+        <div class="flex items-center gap-3 mb-5">
+          <span id="urgency-badge"
+            class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm">
+          </span>
+          <span class="text-sm text-gray-500 dark:text-gray-400">Triage Result</span>
+        </div>
+
+        <!-- Guidance -->
+        <div class="mb-5">
+          <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Guidance</h3>
+          <p id="guidance-text" class="text-gray-800 dark:text-gray-200 text-base leading-relaxed"></p>
+        </div>
+
+        <!-- Clinical Note -->
+        <div class="relative">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Clinical Note</h3>
+            <button id="copy-btn"
+              class="flex items-center gap-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 rounded-lg font-medium transition-all">
+              <span>📋</span> Copy
+            </button>
+          </div>
+          <pre id="clinical-note"
+            class="whitespace-pre-line font-mono text-sm bg-gray-50 dark:bg-gray-900 border-l-4 border-primary-500 rounded-r-xl p-4 text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto"></pre>
+        </div>
+      </div>
+
+      <!-- Error message -->
+      <div id="error-message" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-5 text-red-700 dark:text-red-300 text-sm font-medium">
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       CLINICS SECTION
+  ============================================================ -->
+  <section id="clinics" class="py-16 px-4 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-3">
+          Nearby Clinics in Bengaluru
+        </h2>
+        <p class="text-gray-500 dark:text-gray-400 text-base max-w-xl mx-auto">
+        </p>
+      </div>
+      <div id="clinic-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Cards injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       ABOUT SECTION
+  ============================================================ -->
+  <section id="about" class="py-16 px-4 bg-gray-50 dark:bg-gray-950">
+    <div class="max-w-4xl mx-auto text-center">
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-6">
+        About PCare AI
+      </h2>
+      <p class="text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-4">
+        PCare AI is an intelligent healthcare Suggestion platform built to help patients in India make informed decisions
+        about their health — instantly. Powered by Google's Gemini AI, it analyses symptoms and provides
+        real-time guidance on urgency level and appropriate next steps.
+      </p>
+      <p class="text-gray-600 dark:text-gray-400 text-lg leading-relaxed mb-4">
+        Our system uses a combination of deterministic red-flag detection and advanced AI reasoning to categorise
+        symptoms into Self-Care, OPD, or Emergency triage levels. We also surface nearby verified clinics in Bengaluru
+        so you never have to search alone during a health crisis.
+      </p>
+      <p class="text-gray-500 dark:text-gray-500 text-base leading-relaxed mb-12">
+        Designed with privacy at its core — your symptom data is not stored or shared. PCare AI is a decision-support
+        tool, not a replacement for professional medical consultation.
+      </p>
+
+      <!-- Feature cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+          <div class="text-4xl mb-4">🏥</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Instant Triage</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">AI-powered symptom analysis in seconds. Get clarity on urgency without leaving home.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+          <div class="text-4xl mb-4">📍</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Clinic Finder</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">Discover the right clinic near you in Bengaluru — with live directions and contact info.</p>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-shadow">
+          <div class="text-4xl mb-4">🔒</div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Privacy First</h3>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">Zero data retention. Your health information stays yours — always.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       FOOTER
+  ============================================================ -->
+  <footer class="bg-gray-900 dark:bg-black py-8 px-4 text-center">
+    <p class="text-gray-300 font-semibold mb-1">&copy; 2026 PCare AI</p>
+    <p class="text-gray-500 text-sm">For informational purposes only. Not a substitute for professional medical advice.</p>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+    // Clinics data from Django
+    const CLINICS = {{ clinics_json|safe }};
+
+    // ---- Dark Mode ----
+    function initDarkMode() {
+      const html = document.documentElement;
+      const toggle = document.getElementById('theme-toggle');
+      const label = document.getElementById('theme-label');
+      const sunIcon = document.getElementById('sun-icon');
+      const moonIcon = document.getElementById('moon-icon');
+
+      function applyTheme(dark) {
+        if (dark) {
+          html.classList.add('dark');
+          toggle.setAttribute('aria-checked', 'true');
+          label.textContent = 'Dark Mode';
+          sunIcon.classList.add('hidden');
+          moonIcon.classList.remove('hidden');
+        } else {
+          html.classList.remove('dark');
+          toggle.setAttribute('aria-checked', 'false');
+          label.textContent = 'Light Mode';
+          sunIcon.classList.remove('hidden');
+          moonIcon.classList.add('hidden');
+        }
+      }
+
+      const stored = localStorage.getItem('pcareDark') || localStorage.getItem('mediPulseDark');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = stored !== null ? stored === 'true' : prefersDark;
+      applyTheme(isDark);
+
+      toggle.addEventListener('click', () => {
+        const nowDark = !html.classList.contains('dark');
+        applyTheme(nowDark);
+        localStorage.setItem('pcareDark', nowDark);
+      });
+    }
+
+    // ---- Sidebar ----
+    function initSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      const hamburger = document.getElementById('hamburger-btn');
+      const closeBtn = document.getElementById('sidebar-close');
+
+      function openSidebar() {
+        sidebar.classList.remove('translate-x-full');
+        overlay.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeSidebar() {
+        sidebar.classList.add('translate-x-full');
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+
+      hamburger.addEventListener('click', openSidebar);
+      closeBtn.addEventListener('click', closeSidebar);
+      overlay.addEventListener('click', closeSidebar);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeSidebar();
+      });
+    }
+
+    // ---- Type badge color ----
+    function getTypeBadgeClasses(type) {
+      switch (type) {
+        case 'Trauma':        return 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300';
+        case 'OPD':           return 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300';
+        case 'Multispeciality': return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300';
+        default:              return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+      }
+    }
+
+    // ---- Render Clinics ----
+    function renderClinics(highlightUrgent) {
+      const grid = document.getElementById('clinic-grid');
+      grid.innerHTML = '';
+
+      const HIGHLIGHT_TYPES = ['Trauma', 'OPD', 'Multispeciality'];
+
+      CLINICS.forEach((clinic) => {
+        const shouldHighlight = highlightUrgent && clinic.open_now && HIGHLIGHT_TYPES.includes(clinic.type);
+        const borderColor = clinic.open_now ? 'border-l-green-400' : 'border-l-gray-300 dark:border-l-gray-600';
+        const highlightClasses = shouldHighlight ? 'recommended-glow ring-2 ring-yellow-400 ring-offset-2 dark:ring-offset-gray-900' : '';
+
+        const card = document.createElement('div');
+        card.className = `clinic-card bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 border-l-4 ${borderColor} p-5 flex flex-col gap-3 ${highlightClasses}`;
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-bold text-gray-900 dark:text-white text-base leading-snug">${clinic.name}</h3>
+              <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getTypeBadgeClasses(clinic.type)}">${clinic.type}</span>
+            </div>
+            ${shouldHighlight ? '<span class="shrink-0 inline-flex items-center gap-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 text-xs font-bold px-2.5 py-1 rounded-full">⭐ Recommended</span>' : ''}
+          </div>
+          <div class="space-y-1.5 text-sm text-gray-600 dark:text-gray-400">
+            <div class="flex items-center gap-2"><span>📍</span> <span>${clinic.area}</span></div>
+            <div class="flex items-center gap-2"><span>🕐</span> <span>${clinic.timings}</span></div>
+          </div>
+          <div class="flex items-center justify-between mt-1">
+            <span class="inline-flex items-center gap-1.5 text-xs font-semibold ${clinic.open_now ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}">
+              <span class="text-base">${clinic.open_now ? '🟢' : '🔴'}</span>
+              ${clinic.open_now ? 'Open Now' : 'Closed'}
+            </span>
+            <a href="${clinic.maps_link}" target="_blank" rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl transition-all hover:scale-105">
+              🗺️ Get Directions
+            </a>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // ---- CSRF cookie reader ----
+    function getCookie(name) {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const trimmed = cookie.trim();
+        if (trimmed.startsWith(name + '=')) {
+          return decodeURIComponent(trimmed.substring(name.length + 1));
+        }
+      }
+      return null;
+    }
+
+    // ---- Display Result ----
+    function displayResult(data) {
+      const panel = document.getElementById('result-panel');
+      const skeleton = document.getElementById('loading-skeleton');
+      const content = document.getElementById('result-content');
+      const errorDiv = document.getElementById('error-message');
+
+      skeleton.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+
+      const urgencyBadge = document.getElementById('urgency-badge');
+      const guidanceText = document.getElementById('guidance-text');
+      const clinicalNote = document.getElementById('clinical-note');
+      const clinicalNoteBox = clinicalNote.parentElement;
+
+      // Badge config
+      const badgeConfig = {
+        SELF_CARE:  { classes: 'bg-green-100  dark:bg-green-900/40  text-green-700  dark:text-green-300',  icon: '✅', label: 'Self-Care' },
+        OPD:        { classes: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300', icon: '⚠️', label: 'OPD Visit' },
+        EMERGENCY:  { classes: 'bg-red-100    dark:bg-red-900/40    text-red-700    dark:text-red-300',    icon: '🚨', label: 'Emergency' },
+      };
+
+      const config = badgeConfig[data.urgency] || badgeConfig['OPD'];
+      urgencyBadge.className = `inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${config.classes}`;
+      urgencyBadge.innerHTML = `<span>${config.icon}</span> ${config.label}`;
+
+      // Border color by urgency
+      const borderColorMap = { SELF_CARE: 'border-green-500', OPD: 'border-yellow-500', EMERGENCY: 'border-red-500' };
+      clinicalNote.className = `whitespace-pre-line font-mono text-sm bg-gray-50 dark:bg-gray-900 border-l-4 ${borderColorMap[data.urgency] || 'border-primary-500'} rounded-r-xl p-4 text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto`;
+
+      guidanceText.textContent = data.guidance || '';
+      clinicalNote.textContent = data.clinical_note || '';
+
+      content.classList.remove('hidden');
+      panel.classList.remove('hidden');
+
+      // Smooth scroll to result
+      setTimeout(() => {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+
+    // ---- Handle Search ----
+    async function handleSearch() {
+      const textarea = document.getElementById('symptom-input');
+      const symptom = textarea.value.trim();
+      if (!symptom) {
+        textarea.focus();
+        textarea.classList.add('ring-2', 'ring-red-400');
+        setTimeout(() => textarea.classList.remove('ring-2', 'ring-red-400'), 1500);
+        return;
+      }
+
+      const panel = document.getElementById('result-panel');
+      const skeleton = document.getElementById('loading-skeleton');
+      const content = document.getElementById('result-content');
+      const errorDiv = document.getElementById('error-message');
+      const searchBtn = document.getElementById('search-btn');
+
+      // Show panel + skeleton
+      panel.classList.remove('hidden');
+      skeleton.classList.remove('hidden');
+      content.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+      searchBtn.disabled = true;
+
+      // Scroll to panel
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+
+      try {
+        const csrfToken = getCookie('csrftoken');
+        const response = await fetch('/api/triage/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken || '',
+          },
+          body: JSON.stringify({ symptom }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || `Server error ${response.status}`);
+        }
+
+        displayResult(data);
+        renderClinics(data.highlight_clinics === true);
+
+      } catch (err) {
+        skeleton.classList.add('hidden');
+        content.classList.add('hidden');
+        errorDiv.classList.remove('hidden');
+        errorDiv.textContent = `⚠️ ${err.message || 'An error occurred. Please try again.'}`;
+      } finally {
+        searchBtn.disabled = false;
+      }
+    }
+
+    // ---- Copy button ----
+    function initCopyButton() {
+      const copyBtn = document.getElementById('copy-btn');
+      copyBtn.addEventListener('click', () => {
+        const text = document.getElementById('clinical-note').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const originalHTML = copyBtn.innerHTML;
+          copyBtn.innerHTML = '<span>✅</span> Copied!';
+          copyBtn.classList.add('copy-flash');
+          setTimeout(() => {
+            copyBtn.innerHTML = originalHTML;
+            copyBtn.classList.remove('copy-flash');
+          }, 1500);
+        });
+      });
+    }
+
+    // ---- Wire up events on DOMContentLoaded ----
+    document.addEventListener('DOMContentLoaded', () => {
+      initDarkMode();
+      initSidebar();
+      renderClinics(false);
+      initCopyButton();
+
+      // Search button
+      document.getElementById('search-btn').addEventListener('click', handleSearch);
+
+      // Ctrl+Enter in textarea
+      document.getElementById('symptom-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          handleSearch();
+        }
+      });
+
+      // Character counter
+      document.getElementById('symptom-input').addEventListener('input', (e) => {
+        document.getElementById('char-counter').textContent = `${e.target.value.length} / 800`;
+      });
+
+      // Quick chips
+      document.querySelectorAll('.symptom-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const symptomText = chip.getAttribute('data-symptom');
+          const textarea = document.getElementById('symptom-input');
+          textarea.value = symptomText;
+          document.getElementById('char-counter').textContent = `${symptomText.length} / 800`;
+          textarea.focus();
+          handleSearch();
+        });
+      });
+    });
+  </script>
+</body>
+</html>

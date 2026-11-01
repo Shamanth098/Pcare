@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "name": "Manipal Hospital Whitefield",
+    "area": "Whitefield",
+    "timings": "Mon–Sun: 24 Hours",
+    "type": "Multispeciality",
+    "open_now": true,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Manipal+Hospital+Whitefield+Bengaluru",
+    "phone": "+91 80 2502 4444"
+  },
+  {
+    "id": 2,
+    "name": "Apollo Trauma Centre Bannerghatta",
+    "area": "Bannerghatta Road",
+    "timings": "Mon–Sun: 24 Hours",
+    "type": "Trauma",
+    "open_now": true,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Apollo+Trauma+Centre+Bannerghatta+Bengaluru",
+    "phone": "+91 80 2630 4050"
+  },
+  {
+    "id": 3,
+    "name": "Fortis Hospital Rajajinagar",
+    "area": "Rajajinagar",
+    "timings": "Mon–Sun: 24 Hours",
+    "type": "Multispeciality",
+    "open_now": true,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Fortis+Hospital+Rajajinagar+Bengaluru",
+    "phone": "+91 80 4989 4989"
+  },
+  {
+    "id": 4,
+    "name": "Narayana Health City Bommasandra",
+    "area": "Bommasandra",
+    "timings": "Mon–Sun: 24 Hours",
+    "type": "Trauma",
+    "open_now": true,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Narayana+Health+City+Bommasandra+Bengaluru",
+    "phone": "+91 80 7122 2222"
+  },
+  {
+    "id": 5,
+    "name": "Sakra World Hospital Bellandur",
+    "area": "Bellandur",
+    "timings": "Mon–Sun: 24 Hours",
+    "type": "OPD",
+    "open_now": true,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Sakra+World+Hospital+Bellandur+Bengaluru",
+    "phone": "+91 80 4969 4969"
+  },
+  {
+    "id": 6,
+    "name": "Columbia Asia Hospital Hebbal",
+    "area": "Hebbal",
+    "timings": "Mon–Sat: 8 AM – 9 PM",
+    "type": "General",
+    "open_now": false,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Columbia+Asia+Hospital+Hebbal+Bengaluru",
+    "phone": "+91 80 4345 6789"
+  },
+  {
+    "id": 7,
+    "name": "Vikram Hospital Millers Road",
+    "area": "Millers Road",
+    "timings": "Mon–Sat: 9 AM – 8 PM",
+    "type": "OPD",
+    "open_now": false,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Vikram+Hospital+Millers+Road+Bengaluru",
+    "phone": "+91 80 4115 3333"
+  },
+  {
+    "id": 8,
+    "name": "Sparsh Hospital Infantry Road",
+    "area": "Infantry Road",
+    "timings": "Mon–Sun: 24 Hours",
+    "type": "Trauma",
+    "open_now": true,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Sparsh+Hospital+Infantry+Road+Bengaluru",
+    "phone": "+91 80 4600 0000"
+  },
+  {
+    "id": 9,
+    "name": "Aster CMI Hospital Hebbal",
+    "area": "Hebbal",
+    "timings": "Mon–Sat: 8 AM – 10 PM",
+    "type": "General",
+    "open_now": false,
+    "maps_link": "https://www.google.com/maps/search/?api=1&query=Aster+CMI+Hospital+Hebbal+Bengaluru",
+    "phone": "+91 80 4342 0100"
+  }
+]

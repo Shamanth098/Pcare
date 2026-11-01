@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Registration — PCare AI</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50:  '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              300: '#a5b4fc',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .hero-gradient {
+      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #f0fdf4 100%);
+    }
+    .dark .hero-gradient {
+      background: linear-gradient(135deg, #1e1b4b 0%, #1e293b 40%, #0f172a 100%);
+    }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border-radius: 0.75rem;
+      border: 1px solid #d1d5db;
+      background-color: #ffffff;
+      color: #111827;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    .dark input[type="text"], .dark input[type="password"] {
+      background-color: #1f2937;
+      border-color: #374151;
+      color: #f9fafb;
+    }
+    .dark input[type="text"]:focus, .dark input[type="password"]:focus {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+    }
+  </style>
+
+  <script>
+    if (localStorage.getItem('pcareDark') === 'true' || localStorage.getItem('mediPulseDark') === 'true') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+</head>
+<body class="min-h-screen hero-gradient flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans antialiased text-gray-900 dark:text-gray-100">
+
+  <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+    <a href="{% url 'index' %}" class="inline-flex items-center gap-2 group mb-4">
+      <span class="text-3xl animate-pulse">❤️</span>
+      <span class="text-2xl font-extrabold bg-gradient-to-r from-primary-600 to-blue-500 bg-clip-text text-transparent">
+        PCare AI
+      </span>
+    </a>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+      Register Staff Account
+    </h2>
+    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+      Create an operator profile for clinic coordination
+    </p>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+    <div class="bg-white dark:bg-gray-900 py-8 px-6 shadow-xl rounded-2xl border border-gray-100 dark:border-gray-800 sm:px-10">
+
+      {% if form.non_field_errors %}
+        <div class="mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-xs text-red-700 dark:text-red-300">
+          {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="POST" action="{% url 'register' %}" class="space-y-4">
+        {% csrf_token %}
+
+        {% for field in form %}
+          <div>
+            <label for="{{ field.id_for_label }}" class="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+              <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-1 leading-snug">
+                {{ field.help_text|safe }}
+              </p>
+            {% endif %}
+            {% if field.errors %}
+              <div class="text-xs text-red-600 dark:text-red-400 mt-1">
+                {% for err in field.errors %}
+                  <p>{{ err }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        <div class="pt-2">
+          <button type="submit"
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all hover:scale-[1.02]">
+            Create Account & Sign In
+          </button>
+        </div>
+      </form>
+
+      <div class="mt-6 border-t border-gray-100 dark:border-gray-800 pt-5 text-center text-xs text-gray-500 dark:text-gray-400 space-y-2">
+        <p>
+          Already have an account?
+          <a href="{% url 'login' %}" class="font-semibold text-primary-600 dark:text-primary-400 hover:underline">
+            Sign In here
+          </a>
+        </p>
+        <p>
+          <a href="{% url 'index' %}" class="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+            <span>&larr;</span> Back to Public Triage
+          </a>
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
+
